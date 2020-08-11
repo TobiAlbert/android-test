@@ -1,4 +1,4 @@
-package ng.riby.androidtest
+package ng.riby.androidtest.presentation
 
 import android.Manifest
 import android.content.IntentSender
@@ -7,13 +7,18 @@ import android.os.Bundle
 import android.util.Log
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
+import androidx.lifecycle.Observer
 import com.google.android.gms.common.api.ResolvableApiException
 import com.google.android.gms.location.*
 import com.google.android.gms.tasks.Task
 import kotlinx.android.synthetic.main.activity_main.*
+import ng.riby.androidtest.R
 import ng.riby.androidtest.utils.hasRequiredPermissions
+import org.koin.androidx.viewmodel.ext.android.viewModel
 
 class MainActivity : AppCompatActivity() {
+
+    private val viewmodel: MainActivityViewModel by viewModel()
 
     private lateinit var fusedLocationProviderClient: FusedLocationProviderClient
     private val locationCallback = object : LocationCallback() {
@@ -21,6 +26,7 @@ class MainActivity : AppCompatActivity() {
             super.onLocationResult(locationResult)
             locationResult?.lastLocation?.let {
                 Log.i(TAG, "Latitude: ${it.latitude}; Longitude: ${it.longitude}\n")
+                viewmodel.saveLocation(it.latitude, it.longitude)
             }
         }
     }
@@ -62,10 +68,12 @@ class MainActivity : AppCompatActivity() {
             Log.i(TAG, "$locationSettingsResponse")
 
             fusedLocationProviderClient = LocationServices.getFusedLocationProviderClient(this)
-            val hasLocationPermission =
-                ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED
 
-            if (hasLocationPermission) {
+            val hasLocationPermissions =
+                    ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED &&
+                    ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) == PackageManager.PERMISSION_GRANTED
+
+            if (hasLocationPermissions) {
                 fusedLocationProviderClient.requestLocationUpdates(locationRequest, locationCallback, null)
             }
         }
@@ -92,7 +100,13 @@ class MainActivity : AppCompatActivity() {
             fusedLocationProviderClient.removeLocationUpdates(locationCallback).addOnCompleteListener {
                 captureBtn.setOnClickListener { beginLocationCapture() }
                 captureBtn.text = getString(R.string.start_location_capture_label)
+                viewmodel.saveLocations()
             }
         }
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        stopLocationCapture()
     }
 }

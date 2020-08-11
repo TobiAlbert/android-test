@@ -6,11 +6,10 @@ import android.app.Activity
 import android.os.Build
 import androidx.annotation.RequiresApi
 import com.karumi.dexter.Dexter
+import com.karumi.dexter.MultiplePermissionsReport
 import com.karumi.dexter.PermissionToken
-import com.karumi.dexter.listener.PermissionDeniedResponse
-import com.karumi.dexter.listener.PermissionGrantedResponse
 import com.karumi.dexter.listener.PermissionRequest
-import com.karumi.dexter.listener.single.PermissionListener
+import com.karumi.dexter.listener.multi.MultiplePermissionsListener
 
 @TargetApi(Build.VERSION_CODES.M)
 @RequiresApi(Build.VERSION_CODES.M)
@@ -19,20 +18,21 @@ fun Activity.hasRequiredPermissions(
         onDenied: () -> Unit
 ) {
     Dexter.withActivity(this)
-            .withPermission(Manifest.permission.ACCESS_FINE_LOCATION)
-            .withListener(object : PermissionListener {
-                override fun onPermissionGranted(response: PermissionGrantedResponse?) {
-                    onGranted()
+            .withPermissions(Manifest.permission.ACCESS_COARSE_LOCATION, Manifest.permission.ACCESS_FINE_LOCATION)
+            .withListener(object : MultiplePermissionsListener {
+                override fun onPermissionsChecked(report: MultiplePermissionsReport?) {
+                    report?.let {
+                        if (it.areAllPermissionsGranted()) onGranted()
+                        else onDenied()
+                    }
                 }
 
-                override fun onPermissionRationaleShouldBeShown(permission: PermissionRequest?, token: PermissionToken?) {
+                override fun onPermissionRationaleShouldBeShown(
+                        permissions: MutableList<PermissionRequest>?,
+                        token: PermissionToken?
+                ) {
                     token?.continuePermissionRequest()
                 }
-
-                override fun onPermissionDenied(response: PermissionDeniedResponse?) {
-                    onDenied()
-                }
-
             })
             .onSameThread()
             .check()
