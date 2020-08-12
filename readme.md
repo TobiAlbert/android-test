@@ -1,4 +1,13 @@
 #Riby Android Test
+
+## Notes
+Google API Key is not included in this Repo. Add yours to the `credentials.samples.properties` file.
+```text
+in credentials.samples.properties
+
+GOOGLE_API_KEY="Your_API_KEY"
+```
+
 ## Synopsis
 <p>
 The objective of this test is to create an app that tracks the movement of a device.
