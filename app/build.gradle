@@ -4,7 +4,7 @@ apply plugin: 'kotlin-android-extensions'
 apply plugin: 'kotlin-kapt'
 
 // Load Credentials File
-def keyStorePropertiesFile = rootProject.file('credentials.properties')
+def keyStorePropertiesFile = rootProject.file('credentials.samples.properties')
 def keystoreProperties = new Properties()
 keystoreProperties.load(new FileInputStream(keyStorePropertiesFile))
 
