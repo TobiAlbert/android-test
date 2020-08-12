@@ -1,17 +1,14 @@
 package ng.riby.androidtest.data.local.dao
 
 import androidx.lifecycle.LiveData
-import androidx.room.*
+import androidx.room.Dao
+import androidx.room.Insert
+import androidx.room.OnConflictStrategy
+import androidx.room.Query
 import ng.riby.androidtest.data.local.entities.LocationEntity
 
 @Dao
 interface LocationDao {
-
-    @Query("SELECT * FROM locations ORDER BY updated_at ASC LIMIT 1")
-    suspend fun getStartLocation(): LocationEntity
-
-    @Query("SELECT * FROM locations ORDER BY updated_at DESC LIMIT 1")
-    suspend fun getStopLocation(): LocationEntity
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insert(location: LocationEntity)

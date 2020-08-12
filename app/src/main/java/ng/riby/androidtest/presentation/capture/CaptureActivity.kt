@@ -1,24 +1,23 @@
-package ng.riby.androidtest.presentation
+package ng.riby.androidtest.presentation.capture
 
 import android.Manifest
-import android.content.IntentSender
+import android.content.Intent
 import android.content.pm.PackageManager
 import android.os.Bundle
 import android.util.Log
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
-import androidx.lifecycle.Observer
-import com.google.android.gms.common.api.ResolvableApiException
 import com.google.android.gms.location.*
 import com.google.android.gms.tasks.Task
 import kotlinx.android.synthetic.main.activity_main.*
 import ng.riby.androidtest.R
+import ng.riby.androidtest.presentation.map.MapActivity
 import ng.riby.androidtest.utils.hasRequiredPermissions
 import org.koin.androidx.viewmodel.ext.android.viewModel
 
-class MainActivity : AppCompatActivity() {
+class CaptureActivity : AppCompatActivity() {
 
-    private val viewmodel: MainActivityViewModel by viewModel()
+    private val viewmodel: CaptureViewModel by viewModel()
 
     private lateinit var fusedLocationProviderClient: FusedLocationProviderClient
     private val locationCallback = object : LocationCallback() {
@@ -62,7 +61,10 @@ class MainActivity : AppCompatActivity() {
         val task: Task<LocationSettingsResponse> = client.checkLocationSettings(builder.build())
 
         task.addOnSuccessListener { locationSettingsResponse ->
-            captureBtn.setOnClickListener { stopLocationCapture() }
+            captureBtn.setOnClickListener {
+                stopLocationCapture()
+                startActivity(Intent(this@CaptureActivity, MapActivity::class.java))
+            }
             captureBtn.text = getString(R.string.stop_location_capture_label)
 
             Log.i(TAG, "$locationSettingsResponse")
@@ -71,26 +73,10 @@ class MainActivity : AppCompatActivity() {
 
             val hasLocationPermissions =
                     ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED &&
-                    ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) == PackageManager.PERMISSION_GRANTED
+                            ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) == PackageManager.PERMISSION_GRANTED
 
             if (hasLocationPermissions) {
                 fusedLocationProviderClient.requestLocationUpdates(locationRequest, locationCallback, null)
-            }
-        }
-
-        task.addOnFailureListener { exception ->
-            Log.e(TAG, "Error connecting to location settings client $exception")
-            if (exception is ResolvableApiException){
-                // Location settings are not satisfied, but this can be fixed
-                // by showing the user a dialog.
-                try {
-                    // Show the dialog by calling startResolutionForResult(),
-                    // and check the result in onActivityResult().
-//                    exception.startResolutionForResult(this@MainActivity,
-//                            REQUEST_CHECK_SETTINGS)
-                } catch (sendEx: IntentSender.SendIntentException) {
-                    // Ignore the error.
-                }
             }
         }
     }
@@ -100,7 +86,6 @@ class MainActivity : AppCompatActivity() {
             fusedLocationProviderClient.removeLocationUpdates(locationCallback).addOnCompleteListener {
                 captureBtn.setOnClickListener { beginLocationCapture() }
                 captureBtn.text = getString(R.string.start_location_capture_label)
-                viewmodel.saveLocations()
             }
         }
     }
